@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Saved Items - BizForge{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Your Saved Items</h2>
+    <div id="savedList" class="grid mt-4">
+        <p>Loading...</p>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    async function loadSavedItems() {
+        try {
+            const items = await api.getSavedItems();
+            const container = document.getElementById('savedList');
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                container.innerHTML = '<p>No saved items yet.</p>';
+                return;
+            }
+
+            // Reverse order to show newest first
+            items.reverse().forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.marginBottom = '1rem';
+
+                let contentHtml = '';
+
+                if (item.item_type === 'brand') {
+                    contentHtml = `
+                        <h4>Brand Names</h4>
+                        <p class="text-muted">${item.content.description}</p>
+                        <ul>${item.content.names.map(n => `<li>${n}</li>`).join('')}</ul>
+                    `;
+                } else if (item.item_type === 'logo') {
+                    // Check if we have a file_url or just base64
+                    const imgSrc = item.content.file_url || item.content.image;
+
+                    contentHtml = `
+                        <h4>Logo</h4>
+                        <p class="text-muted">${item.content.prompt}</p>
+                        <img src="${imgSrc}" style="max-width: 100%; max-height: 200px; border-radius: 4px;">
+                    `;
+                } else if (item.item_type === 'content') {
+                    contentHtml = `
+                        <h4>${item.content.type || 'Content'}</h4>
+                        <p class="text-muted">Topic: ${item.content.topic}</p>
+                        <div style="background: #f9fafb; padding: 0.5rem; border-radius: 4px; white-space: pre-wrap;">${item.content.text}</div>
+                    `;
+                } else {
+                    contentHtml = `<pre>${JSON.stringify(item.content, null, 2)}</pre>`;
+                }
+
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <span class="badge" style="background: var(--secondary-color); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">${item.item_type.toUpperCase()}</span>
+                            <small class="text-muted ml-2">${new Date(item.created_at).toLocaleString()}</small>
+                        </div>
+                    </div>
+                    <div class="mt-2">${contentHtml}</div>
+                `;
+                container.appendChild(div);
+            });
+
+        } catch (e) {
+            document.getElementById('savedList').innerHTML = '<p>Error loading items: ' + e.message + '</p>';
+        }
+    }
+
+    loadSavedItems();
+</script>
+{% endblock %}

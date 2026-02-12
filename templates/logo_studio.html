@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Logo Studio - BizForge{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2 class="text-center">Logo Studio</h2>
+    <form id="logoForm">
+        <div class="form-group">
+            <label class="form-label">Brand Description</label>
+            <input type="text" class="form-input" id="description" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Style</label>
+            <select class="form-input" id="style">
+                <option value="minimalist">Minimalist</option>
+                <option value="modern">Modern</option>
+                <option value="vintage">Vintage</option>
+                <option value="futuristic">Futuristic</option>
+                <option value="luxury">Luxury</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Generate Logo</button>
+    </form>
+    <div id="result" class="mt-4 text-center" style="display: none;">
+        <p><strong>Prompt used:</strong> <span id="promptText"></span></p>
+        <img id="logoImage" src="" style="max-width: 100%; border-radius: 8px; margin-top: 1rem;">
+        <br>
+        <button id="saveBtn" class="btn btn-outline mt-2">Save Logo</button>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    let currentLogo = null;
+
+    document.getElementById('logoForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const description = document.getElementById('description').value;
+        const style = document.getElementById('style').value;
+        try {
+            const res = await fetch('/api/generate-logo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description, style })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'API Error');
+            }
+
+            const data = await res.json();
+            currentLogo = data;
+
+            document.getElementById('promptText').textContent = data.prompt;
+            document.getElementById('logoImage').src = data.image; // data.image is base64
+            document.getElementById('result').style.display = 'block';
+        } catch (e) { alert('Error generating logo: ' + e.message); }
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+        if (!currentLogo) return;
+        try {
+            const api = new API();
+            // We save the file_url if available, or just the whole object
+            await api.saveItem('logo', currentLogo);
+            alert('Logo saved to library!');
+        } catch (e) {
+            alert('Error saving: ' + e.message);
+        }
+    });
+</script>
+{% endblock %}

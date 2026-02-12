@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Content Studio - BizForge{% endblock %}
+
+{% block content %}
+<style>
+    .tabs {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .tab-btn {
+        padding: 1rem 2rem;
+        font-weight: 600;
+        color: #6b7280;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+        color: #4f46e5;
+        border-bottom-color: #4f46e5;
+    }
+
+    .tab-pane {
+        display: none;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .desc-section {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .desc-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .copy-btn {
+        float: right;
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        background: #f3f4f6;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .copy-btn:hover {
+        background: #e5e7eb;
+    }
+</style>
+
+<div class="container" style="max-width: 800px;">
+    <h1 class="text-center mb-4">Content Studio</h1>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('general')">General Content</button>
+        <button class="tab-btn" onclick="switchTab('product')">Product Listings</button>
+    </div>
+
+    <!-- General Content Generator -->
+    <div id="general-tab" class="tab-pane active">
+        <div class="card">
+            <h2 class="text-center mb-4">Social & Blog Content</h2>
+            <form id="contentForm">
+                <div class="form-group">
+                    <label class="form-label">Topic / Subject</label>
+                    <input type="text" class="form-input" id="topic" placeholder="e.g. 5 tips for remote work" required>
+                </div>
+                <div class="row" style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Content Type</label>
+                        <select class="form-input" id="contentType">
+                            <option value="blog post">Blog Post</option>
+                            <option value="social media post">Social Media Post</option>
+                            <option value="email newsletter">Email Newsletter</option>
+                            <option value="ad copy">Ad Copy</option>
+                            <option value="tweet thread">Tweet Thread</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Tone</label>
+                        <select class="form-input" id="tone">
+                            <option value="professional">Professional</option>
+                            <option value="casual">Casual & Friendly</option>
+                            <option value="humorous">Humorous</option>
+                            <option value="urgent">Urgent / Sales</option>
+                            <option value="inspiring">Inspiring</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Generate Content</button>
+            </form>
+            <div id="result" class="mt-4" style="display: none;">
+                <h3>Generated Content:</h3>
+                <div class="card" style="background: #f9fafb; white-space: pre-wrap; border: 1px solid #e5e7eb;"
+                    id="contentText"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Description Generator -->
+    <div id="product-tab" class="tab-pane">
+        <div class="card">
+            <h2 class="text-center mb-4">Product Description Generator</h2>
+            <p class="text-center text-muted mb-4">Create consistent, SEO-friendly descriptions for your catalog.</p>
+
+            <form id="productForm">
+                <div class="form-group">
+                    <label class="form-label">Product Name</label>
+                    <input type="text" class="form-input" id="prodName" placeholder="e.g. Artisan Sourdough Bread"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Key Features / Ingredients (Comma separated)</label>
+                    <textarea class="form-input" id="prodFeatures" rows="3"
+                        placeholder="e.g. Organic flour, 24-hour fermentation, crispy crust, no preservatives"
+                        required></textarea>
+                </div>
+                <div class="row" style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Target Audience</label>
+                        <input type="text" class="form-input" id="prodAudience"
+                            placeholder="e.g. Health-conscious foodies">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label class="form-label">Tone</label>
+                        <select class="form-input" id="prodTone">
+                            <option value="persuasive">Persuasive</option>
+                            <option value="luxury">Luxury / Premium</option>
+                            <option value="friendly">Friendly / Approachable</option>
+                            <option value="technical">Technical / Detailed</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Generate Listing</button>
+            </form>
+
+            <div id="prodResult" class="mt-4" style="display: none;">
+                <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #e5e7eb;">
+
+                <div class="desc-section">
+                    <button class="copy-btn" onclick="copyToClipboard('shortDesc')">Copy</button>
+                    <span class="desc-label">Short Description (Catalog)</span>
+                    <p id="shortDesc"></p>
+                </div>
+
+                <div class="desc-section">
+                    <button class="copy-btn" onclick="copyToClipboard('marketingBlurb')">Copy</button>
+                    <span class="desc-label">Marketing Blurb (Ad/Social)</span>
+                    <p id="marketingBlurb" style="font-style: italic; color: #4f46e5;"></p>
+                </div>
+
+                <div class="desc-section">
+                    <button class="copy-btn" onclick="copyToClipboard('bulletsList')">Copy</button>
+                    <span class="desc-label">Feature Bullets</span>
+                    <ul id="bulletsList" style="padding-left: 1.2rem; margin-bottom: 0;"></ul>
+                </div>
+
+                <div class="desc-section">
+                    <button class="copy-btn" onclick="copyToClipboard('longDesc')">Copy</button>
+                    <span class="desc-label">Long Description (Product Page)</span>
+                    <p id="longDesc" style="white-space: pre-wrap;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function switchTab(tabName) {
+        // Hide all tabs
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        // Show selected
+        document.getElementById(tabName + '-tab').classList.add('active');
+        // Find button (index based simple hack or query)
+        const buttons = document.querySelectorAll('.tab-btn');
+        if (tabName === 'general') buttons[0].classList.add('active');
+        if (tabName === 'product') buttons[1].classList.add('active');
+    }
+
+    function copyToClipboard(elementId) {
+        const text = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Copied to clipboard!');
+        });
+    }
+
+    // General Content Form
+    document.getElementById('contentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+
+        const topic = document.getElementById('topic').value;
+        const tone = document.getElementById('tone').value;
+        const content_type = document.getElementById('contentType').value;
+
+        try {
+            const res = await fetch('/api/generate-content', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic, tone, content_type })
+            });
+            const data = await res.json();
+            document.getElementById('contentText').textContent = data.content;
+            document.getElementById('result').style.display = 'block';
+        } catch (e) {
+            alert('Error generating content');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Generate Content';
+        }
+    });
+
+    // Product Description Form
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        btn.disabled = true;
+        btn.textContent = 'Creating Listing...';
+
+        const product_name = document.getElementById('prodName').value;
+        const features = document.getElementById('prodFeatures').value;
+        const target_audience = document.getElementById('prodAudience').value;
+        const tone = document.getElementById('prodTone').value;
+
+        try {
+            const res = await fetch('/api/generate-desc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_name, features, target_audience, tone })
+            });
+
+            if (!res.ok) throw new Error('API Error');
+
+            const data = await res.json();
+
+            // Populate fields
+            document.getElementById('shortDesc').textContent = data.short_description;
+            document.getElementById('longDesc').textContent = data.long_description;
+            document.getElementById('marketingBlurb').textContent = data.marketing_blurb;
+
+            const bulletsList = document.getElementById('bulletsList');
+            bulletsList.innerHTML = '';
+            if (data.bullets && Array.isArray(data.bullets)) {
+                data.bullets.forEach(b => {
+                    const li = document.createElement('li');
+                    li.textContent = b;
+                    bulletsList.appendChild(li);
+                });
+            } else {
+                bulletsList.innerHTML = '<li>No bullets generated</li>';
+            }
+
+            document.getElementById('prodResult').style.display = 'block';
+        } catch (e) {
+            console.error(e);
+            alert('Error generating product description');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Generate Listing';
+        }
+    });
+</script>
+{% endblock %}

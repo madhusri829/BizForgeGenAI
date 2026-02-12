@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Home - BizForge{% endblock %}
+
+{% block content %}
+<div class="text-center" style="padding: 4rem 0;">
+    <h1 style="font-size: 3rem; margin-bottom: 1rem;">Forge Your Business Identity</h1>
+    <p class="text-muted" style="font-size: 1.25rem; margin-bottom: 2rem;">
+        AI-powered tools to generate brand names, logos, marketing content, and more.
+    </p>
+    <div style="display: flex; justify-content: center; gap: 1rem;">
+        <a href="/brand-generator" class="btn btn-primary">Start Branding</a>
+    </div>
+</div>
+
+<div class="grid">
+    <div class="card">
+        <h3>🚀 Brand Generator</h3>
+        <p>Get creative and unique brand names instantly powered by Groq.</p>
+        <a href="/brand-generator" class="btn btn-outline">Try Now</a>
+    </div>
+    <div class="card">
+        <h3>🎨 Logo Studio</h3>
+        <p>Generate professional logos from text descriptions using SDXL.</p>
+        <a href="/logo-studio" class="btn btn-outline">Try Now</a>
+    </div>
+    <div class="card">
+        <h3>✍️ Content AI</h3>
+        <p>Create engaging marketing copy, blog posts, and social media content.</p>
+        <a href="/content-ai" class="btn btn-outline">Try Now</a>
+    </div>
+</div>
+{% endblock %}

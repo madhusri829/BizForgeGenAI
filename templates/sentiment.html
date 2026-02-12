@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+{% block title %}Brand Sentiment & Feedback Analyzer - BizForge{% endblock %}
+
+{% block content %}
+<style>
+    .sentiment-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .analyzer-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+        color: #333;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+
+    .form-input:focus {
+        border-color: #6366f1;
+        outline: none;
+    }
+
+    .btn-analyze {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        font-size: 1.1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-analyze:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Tabs */
+    .tabs {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .tab-btn {
+        padding: 1rem 2rem;
+        font-weight: 600;
+        color: #6b7280;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+        color: #4f46e5;
+        border-bottom-color: #4f46e5;
+    }
+
+    .tab-pane {
+        display: none;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Results Section */
+    .result-grid {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .score-card {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .score-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2.5rem;
+        font-weight: 800;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+        border: 8px solid #e0e0e0;
+        color: #333;
+    }
+
+    .sentiment-badge {
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+
+    .badge-positive {
+        background: #dcfce7;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+    }
+
+    .badge-neutral {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+    }
+
+    .badge-negative {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
+    }
+
+    .details-card {
+        background: white;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #1e293b;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 0.5rem;
+    }
+
+    .summary-text {
+        font-size: 1.05rem;
+        line-height: 1.6;
+        color: #475569;
+        margin-bottom: 1.5rem;
+    }
+
+    .list-group {
+        list-style: none;
+        padding: 0;
+    }
+
+    .list-item {
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .list-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-icon {
+        margin-right: 12px;
+        font-size: 1.2rem;
+    }
+
+    .loading-overlay {
+        display: none;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #6366f1;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .result-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="sentiment-container">
+    <h1 class="text-center mb-4" style="font-weight: 800; color: #1e293b;">Brand Insights & Analysis</h1>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('reviews')">Review Analyzer</button>
+        <button class="tab-btn" onclick="switchTab('tagline')">Tagline Impact</button>
+    </div>
+
+    <!-- Tab 1: Review Analyzer -->
+    <div id="reviews-tab" class="tab-pane active">
+        <div class="analyzer-card">
+            <h2 class="text-center mb-4">Customer Review Analysis</h2>
+            <form id="sentimentForm">
+                <div class="form-group">
+                    <label class="form-label">Brand Name (Optional)</label>
+                    <input type="text" class="form-input" id="brandName" placeholder="e.g. Acme Coffee Co.">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Customer Reviews / Comments</label>
+                    <textarea class="form-input" id="text" rows="6" placeholder="Paste reviews here..."
+                        required></textarea>
+                </div>
+
+                <button type="submit" class="btn-analyze">Analyze Reviews</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tab 2: Tagline Impact -->
+    <div id="tagline-tab" class="tab-pane">
+        <div class="analyzer-card">
+            <h2 class="text-center mb-4">Tagline Impact Predictor</h2>
+            <p class="text-center text-muted mb-4">Evaluate your tagline's potential for reach, memorability, and brand
+                impact.</p>
+            <form id="taglineAnalysisForm">
+                <div class="form-group">
+                    <label class="form-label">Brand Name</label>
+                    <input type="text" class="form-input" id="taglineBrand" placeholder="e.g. Nike" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Brand Description (Context)</label>
+                    <input type="text" class="form-input" id="taglineDesc"
+                        placeholder="e.g. Athletic apparel and footwear" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Your Tagline</label>
+                    <input type="text" class="form-input" id="taglineText" placeholder="e.g. Just Do It" required>
+                </div>
+
+                <button type="submit" class="btn-analyze">Predict Impact</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Analyzing... identifying key insights...</p>
+    </div>
+
+    <!-- Results Area (Shared structure, dynamic content) -->
+    <div id="resultsArea" style="display: none;">
+        <div class="analyzer-card">
+            <div class="result-grid">
+                <!-- Score Column -->
+                <div class="score-card">
+                    <div class="score-circle" id="scoreValue">--</div>
+                    <span id="sentimentBadge" class="sentiment-badge badge-neutral">--</span>
+                    <p class="text-muted mt-3" style="font-size: 0.9rem;" id="scoreLabel">Overall Score</p>
+                    <div id="reachBadge"
+                        style="display:none; margin-top: 1rem; padding: 4px 12px; background:#e0e7ff; color:#3730a3; border-radius:12px; font-weight:600; font-size:0.8rem;">
+                        Reach: High</div>
+                </div>
+
+                <!-- Details Column -->
+                <div class="details-card">
+                    <div class="mb-4">
+                        <h3 class="section-title">✨ Analysis Summary</h3>
+                        <p id="summaryText" class="summary-text">...</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <h3 class="section-title" id="issuesTitle">🚩 Key Issues</h3>
+                        <ul class="list-group" id="issuesList"></ul>
+                    </div>
+
+                    <div>
+                        <h3 class="section-title" id="suggestionsTitle">💡 Suggestions</h3>
+                        <ul class="list-group" id="suggestionsList"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+        document.getElementById(tabName + '-tab').classList.add('active');
+        const buttons = document.querySelectorAll('.tab-btn');
+        if (tabName === 'reviews') buttons[0].classList.add('active');
+        if (tabName === 'tagline') buttons[1].classList.add('active');
+
+        // Hide results when switching
+        document.getElementById('resultsArea').style.display = 'none';
+    }
+
+    // Review Analysis
+    document.getElementById('sentimentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showLoading(true);
+
+        const text = document.getElementById('text').value;
+        const brandName = document.getElementById('brandName').value;
+
+        try {
+            const res = await fetch('/api/analyze-sentiment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, brand_name: brandName })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                renderReviewResults(data);
+                document.getElementById('resultsArea').style.display = 'block';
+            } else {
+                alert('Analysis failed: ' + (data.detail || 'Unknown error'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Network error');
+        } finally {
+            showLoading(false);
+        }
+    });
+
+    // Tagline Analysis
+    document.getElementById('taglineAnalysisForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showLoading(true);
+
+        const tagline = document.getElementById('taglineText').value;
+        const brand_name = document.getElementById('taglineBrand').value;
+        const brand_description = document.getElementById('taglineDesc').value;
+
+        try {
+            const res = await fetch('/api/analyze-tagline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tagline, brand_name, brand_description })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                renderTaglineResults(data);
+                document.getElementById('resultsArea').style.display = 'block';
+            } else {
+                alert('Analysis failed: ' + (data.detail || 'Unknown error'));
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Network error');
+        } finally {
+            showLoading(false);
+        }
+    });
+
+    function showLoading(show) {
+        document.getElementById('loading').style.display = show ? 'block' : 'none';
+        if (show) document.getElementById('resultsArea').style.display = 'none';
+    }
+
+    function renderReviewResults(data) {
+        // Reset specific UI elements for Reviews
+        document.getElementById('scoreLabel').textContent = 'Sentiment Score';
+        document.getElementById('issuesTitle').textContent = '🚩 Key Issues / Complaints';
+        document.getElementById('suggestionsTitle').textContent = '💡 Actionable Suggestions';
+        document.getElementById('reachBadge').style.display = 'none';
+
+        updateScoreCard(data.score, data.sentiment);
+        document.getElementById('summaryText').textContent = data.summary;
+        renderList('issuesList', data.key_issues, '⚠️');
+        renderList('suggestionsList', data.suggestions, '🚀');
+    }
+
+    function renderTaglineResults(data) {
+        // Reset specific UI elements for Taglines
+        document.getElementById('scoreLabel').textContent = 'Impact Score';
+        document.getElementById('issuesTitle').textContent = '✨ Better Alternatives';
+        document.getElementById('suggestionsTitle').textContent = '💡 improvements';
+
+        // Show Reach
+        const reachBadge = document.getElementById('reachBadge');
+        reachBadge.style.display = 'inline-block';
+        reachBadge.textContent = 'Reach Potential: ' + data.reach_potential;
+
+        updateScoreCard(data.impact_score, data.sentiment);
+        document.getElementById('summaryText').textContent = data.analysis;
+
+        // Map lists
+        renderList('issuesList', data.better_alternatives, '✨'); // Reusing this list container for alternatives
+        renderList('suggestionsList', data.suggestions, '📈');
+    }
+
+    function updateScoreCard(score, label) {
+        const scoreEl = document.getElementById('scoreValue');
+        const badgeEl = document.getElementById('sentimentBadge');
+
+        scoreEl.textContent = score;
+        badgeEl.textContent = label;
+
+        scoreEl.style.borderColor = '#e0e0e0';
+        badgeEl.className = 'sentiment-badge';
+
+        // Simple logic: High score = green, Low = red
+        if (score >= 75) {
+            scoreEl.style.borderColor = '#22c55e';
+            scoreEl.style.color = '#15803d';
+            badgeEl.classList.add('badge-positive');
+        } else if (score < 40) {
+            scoreEl.style.borderColor = '#ef4444';
+            scoreEl.style.color = '#b91c1c';
+            badgeEl.classList.add('badge-negative');
+        } else {
+            scoreEl.style.borderColor = '#94a3b8';
+            badgeEl.classList.add('badge-neutral');
+        }
+    }
+
+    function renderList(elementId, items, icon) {
+        const list = document.getElementById(elementId);
+        list.innerHTML = '';
+        if (items && items.length > 0) {
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'list-item';
+                li.innerHTML = `<span class="item-icon">${icon}</span> <span>${item}</span>`;
+                list.appendChild(li);
+            });
+        } else {
+            list.innerHTML = '<li class="list-item text-muted">None available.</li>';
+        }
+    }
+</script>
+{% endblock %}

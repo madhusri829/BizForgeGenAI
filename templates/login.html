@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Login - BizForge{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 400px; margin: 0 auto;">
+    <h2 class="text-center">Login</h2>
+    <form id="loginForm">
+        <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="email" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-input" id="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+    </form>
+    <p class="text-center mt-4">
+        Don't have an account? <a href="/register">Register</a>
+    </p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        const formData = new FormData();
+        formData.append("username", email);
+        formData.append("password", password);
+
+        try {
+            const response = await fetch('/auth/token', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('access_token', data.access_token);
+                window.location.href = '/';
+            } else {
+                alert('Login failed');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error logging in');
+        }
+    });
+</script>
+{% endblock %}

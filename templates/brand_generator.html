@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Brand Generator - BizForge{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2 class="text-center">Brand Name Generator</h2>
+    <form id="brandForm">
+        <div class="form-group">
+            <label class="form-label">Business Description</label>
+            <textarea class="form-input" id="description" rows="3"
+                placeholder="e.g. A sustainable coffee shop in downtown Seattle" required></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Keywords (optional, comma separated)</label>
+            <input type="text" class="form-input" id="keywords" placeholder="coffee, organic, eco-friendly">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Generate Names</button>
+    </form>
+
+    <div id="results" class="mt-4" style="display: none;">
+        <h3>Suggestions:</h3>
+        <ul id="brandList"></ul>
+        <button id="saveBtn" class="btn btn-outline mt-2">Save Results</button>
+    </div>
+</div>
+
+<div class="card" style="max-width: 600px; margin: 2rem auto 0;">
+    <h2 class="text-center">Tagline Generator</h2>
+    <form id="taglineForm">
+        <div class="form-group">
+            <label class="form-label">Brand Name</label>
+            <input type="text" class="form-input" id="taglineBrand" placeholder="e.g. Bean & Brew" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Business Description</label>
+            <textarea class="form-input" id="taglineDesc" rows="2"
+                placeholder="Describe what makes your brand unique..." required></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Tone</label>
+            <select class="form-input" id="taglineTone">
+                <option value="catchy">Catchy & Memorable</option>
+                <option value="professional">Professional & Trustworthy</option>
+                <option value="humorous">Humorous & Witty</option>
+                <option value="minimalist">Minimalist & Modern</option>
+                <option value="emotional">Emotional & Inspiring</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Generate Taglines</button>
+    </form>
+
+    <div id="taglineResults" class="mt-4" style="display: none;">
+        <h3>Tagline Ideas:</h3>
+        <div id="taglineList"></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentResults = null;
+
+    // Existing Brand Generator Logic
+    document.getElementById('brandForm').addEventListener('submit', async (e) => {
+        // ... (keep existing logic) ...
+        e.preventDefault();
+        const description = document.getElementById('description').value;
+        const keywordsVal = document.getElementById('keywords').value;
+        const keywords = keywordsVal ? keywordsVal.split(',').map(k => k.trim()) : [];
+
+        try {
+            const response = await fetch('/api/generate-brand', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ description, keywords })
+            });
+
+            if (!response.ok) throw new Error('Generation failed');
+            const data = await response.json();
+
+            currentResults = { description, names: data.brand_names };
+
+            const list = document.getElementById('brandList');
+            list.innerHTML = '';
+            data.brand_names.forEach(name => {
+                const li = document.createElement('li');
+                li.style.padding = '8px';
+                li.style.borderBottom = '1px solid #eee';
+                li.innerHTML = `<strong>${name}</strong>`;
+                list.appendChild(li);
+            });
+            document.getElementById('results').style.display = 'block';
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to generate brands');
+        }
+    });
+
+    // Tagline Generator Logic
+    document.getElementById('taglineForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const brand_name = document.getElementById('taglineBrand').value;
+        const description = document.getElementById('taglineDesc').value;
+        const tone = document.getElementById('taglineTone').value;
+
+        try {
+            const response = await fetch('/api/generate-tagline', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ brand_name, description, tone })
+            });
+
+            if (!response.ok) throw new Error('Generation failed');
+            const data = await response.json();
+            const taglines = data.taglines.taglines || data.taglines; // Handle nested or flat return
+
+            const list = document.getElementById('taglineList');
+            list.innerHTML = '';
+
+            if (Array.isArray(taglines)) {
+                taglines.forEach(item => {
+                    const div = document.createElement('div');
+                    div.style.marginBottom = '1.5rem';
+                    div.style.padding = '1rem';
+                    div.style.background = '#f8fafc';
+                    div.style.borderRadius = '8px';
+                    div.innerHTML = `
+                        <h4 style="margin: 0 0 0.5rem; color: #4f46e5; font-size: 1.2rem;">"${item.tagline}"</h4>
+                        <p style="margin: 0; font-size: 0.9rem; color: #64748b;">
+                            <span style="font-weight: 600;">Marketing Logic:</span> ${item.logic}
+                        </p>
+                    `;
+                    list.appendChild(div);
+                });
+            }
+            document.getElementById('taglineResults').style.display = 'block';
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to generate taglines');
+        }
+    });
+
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+        if (!currentResults) return;
+        try {
+            await api.saveItem('brand', currentResults);
+            alert('Brand names saved!');
+        } catch (e) {
+            alert('Error saving: ' + e.message);
+        }
+    });
+</script>
+{% endblock %}
